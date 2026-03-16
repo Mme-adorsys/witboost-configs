@@ -210,6 +210,7 @@ spec:
         url: ./skeleton
         values:
           useCaseTemplateId: urn:dmb:utm:nifi-workload-template:1
+          useCaseTemplateVersion: "1"
           infrastructureTemplateId: urn:dmb:itm:nifi-workload-provisioner:1
           name: ${{ parameters.name }}
           fully_qualified_name: ${{ parameters.fully_qualified_name }}

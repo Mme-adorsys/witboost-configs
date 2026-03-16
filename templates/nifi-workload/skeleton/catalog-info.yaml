@@ -28,6 +28,7 @@ spec:
     version: "1.0.0"
     infrastructureTemplateId: ${{ values.infrastructureTemplateId }}
     useCaseTemplateId: ${{ values.useCaseTemplateId }}
+    useCaseTemplateVersion: ${{ values.useCaseTemplateVersion }}
     dependsOn:
       {%- if values.depends_on | length > 0 %}
       {%- for dep in values.depends_on %}

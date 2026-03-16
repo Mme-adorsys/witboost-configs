@@ -267,6 +267,7 @@ spec:
         url: ./skeleton
         values:
           useCaseTemplateId: urn:dmb:utm:postgres-output-port-template:1
+          useCaseTemplateVersion: "1"
           infrastructureTemplateId: urn:dmb:itm:postgres-output-port-provisioner:1
           name: ${{ parameters.name }}
           fully_qualified_name: ${{ parameters.fully_qualified_name }}

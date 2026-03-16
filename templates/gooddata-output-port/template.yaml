@@ -271,6 +271,7 @@ spec:
         url: ./skeleton
         values:
           useCaseTemplateId: urn:dmb:utm:gooddata-output-port-template:1
+          useCaseTemplateVersion: "1"
           infrastructureTemplateId: urn:dmb:itm:gooddata-output-port-provisioner:1
           name: ${{ parameters.name }}
           fully_qualified_name: ${{ parameters.fully_qualified_name }}

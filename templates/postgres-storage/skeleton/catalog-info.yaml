@@ -28,12 +28,12 @@ spec:
     version: "1.0.0"
     infrastructureTemplateId: ${{ values.infrastructureTemplateId }}
     useCaseTemplateId: ${{ values.useCaseTemplateId }}
+    useCaseTemplateVersion: ${{ values.useCaseTemplateVersion }}
     dependsOn:
       {%- if values.depends_on | length > 0 %}
       {%- for dep in values.depends_on %}
       - ${{ dep }}
       {%- endfor %}
-    {%- endif %}
       {%- else %}
       []
       {%- endif %}
@@ -59,3 +59,6 @@ spec:
         nullable: ${{ col.nullable | default(true) }}
         description: "${{ col.description | default('') }}"
       {%- endfor %}
+    {%- else %}
+    tableSchema: []
+    {%- endif %}

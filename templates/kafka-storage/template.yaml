@@ -156,6 +156,7 @@ spec:
         url: ./skeleton
         values:
           useCaseTemplateId: urn:dmb:utm:kafka-storage-template:1
+          useCaseTemplateVersion: "1"
           infrastructureTemplateId: urn:dmb:itm:kafka-topic-provisioner:1
           name: ${{ parameters.name }}
           fully_qualified_name: ${{ parameters.fully_qualified_name }}
