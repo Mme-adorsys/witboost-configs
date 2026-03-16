@@ -1,0 +1,123 @@
+%SKELETON
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: ${{ values.name }}
+  description: ${{ values.description }}
+  annotations:
+    backstage.io/techdocs-ref: dir:.
+  {%- if values.tags | length > 0 %}
+  tags:
+    {%- for tag in values.tags %}
+    - ${{ tag }}
+    {%- endfor %}
+  {%- else %}
+  tags: []
+  {%- endif %}
+spec:
+  type: outputport
+  lifecycle: experimental
+  owner: ${{ values.development_group }}
+  system: ${{ values.dataproduct }}
+  domain: ${{ values.domain }}
+  mesh:
+    name: ${{ values.fully_qualified_name | default(values.name) }}
+    fullyQualifiedName: ${{ values.fully_qualified_name | default(values.name) }}
+    description: ${{ values.description }}
+    kind: outputport
+    version: "1.0.0"
+    infrastructureTemplateId: ${{ values.infrastructureTemplateId }}
+    useCaseTemplateId: ${{ values.useCaseTemplateId }}
+    # ─────────────────────────────────────────────────────
+    # This flag activates Data Contract behaviour in Witboost
+    # ─────────────────────────────────────────────────────
+    __dataContractEnabled: true
+    dependsOn:
+      {%- if values.depends_on | length > 0 %}
+      {%- for dep in values.depends_on %}
+      - ${{ dep }}
+      {%- endfor %}
+      {%- else %}
+      []
+      {%- endif %}
+    {%- if values.tags | length > 0 %}
+    tags:
+      {%- for tag in values.tags %}
+      - ${{ tag }}
+      {%- endfor %}
+    {%- else %}
+    tags: []
+    {%- endif %}
+    termsAndConditions: "${{ values.termsAndConditions }}"
+    SLA:
+      timeliness: "${{ values.timeliness }}"
+      upTime: "${{ values.upTime }}"
+    # ─────────────────────────────────────────────────────
+    # Core Data Contract definition
+    # ─────────────────────────────────────────────────────
+    dataContract:
+      {%- if values.schemaColumns | length > 0 %}
+      schema:
+        {%- for col in values.schemaColumns %}
+        - name: ${{ col.name }}
+          dataType: ${{ col.dataType }}
+          nullable: ${{ col.nullable | default(false) }}
+          description: "${{ col.description | default('') }}"
+          {%- if col.constraints %}
+          constraints: "${{ col.constraints }}"
+          {%- endif %}
+        {%- endfor %}
+      {%- else %}
+      schema: []
+      {%- endif %}
+      SLA:
+        timeliness: "${{ values.timeliness }}"
+        upTime: "${{ values.upTime }}"
+      settings:
+        ingestionMode: ${{ values.ingestion_mode }}
+        onBrokenContract: ${{ values.on_broken_contract }}
+        description: "${{ values.contract_description }}"
+    # ─────────────────────────────────────────────────────
+    # Subcomponents: the 3 Kafka topics + Guardian
+    # ─────────────────────────────────────────────────────
+    components:
+      # 1. Landing Topic – all raw incoming Kafka messages
+      - name: ${{ values.name }}-landing
+        kind: storage
+        description: "Landing topic: receives all raw Kafka messages before validation"
+        specific:
+          type: kafka
+          topicName: ${{ values.topic_landing }}
+          bootstrapServers: "${{ values.kafka_bootstrap_servers }}"
+          schemaRegistryUrl: "${{ values.schema_registry_url }}"
+
+      # 2. Non-Compliant Topic – messages that failed contract validation
+      - name: ${{ values.name }}-non-compliant
+        kind: storage
+        description: "Non-compliant topic: messages that violate the contract schema"
+        specific:
+          type: kafka
+          topicName: ${{ values.topic_noncompliant }}
+          bootstrapServers: "${{ values.kafka_bootstrap_servers }}"
+          schemaRegistryUrl: "${{ values.schema_registry_url }}"
+
+      # 3. Compliant Topic – validated messages; NiFi reads from here → Postgres
+      - name: ${{ values.name }}-compliant
+        kind: outputport
+        description: "Compliant topic: validated messages ready for NiFi → PostgreSQL ingestion"
+        specific:
+          type: kafka
+          topicName: ${{ values.topic_compliant }}
+          bootstrapServers: "${{ values.kafka_bootstrap_servers }}"
+          schemaRegistryUrl: "${{ values.schema_registry_url }}"
+
+      # 4. Data Contract Guardian – monitors compliance at runtime
+      - name: ${{ values.name }}-guardian
+        kind: workload
+        description: "Guardian: monitors contract compliance and routes messages to correct topics"
+        __dataContractGuardianSpec:
+          guards:
+            - dataContractId: "urn:dmb:cmp:${{ values.identifier }}"
+              monitoringResultScheduling:
+                frequency: "${{ values.monitoring_frequency }}"
+                toleranceWindowLength: "${{ values.tolerance_window }}"

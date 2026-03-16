@@ -1,0 +1,327 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: postgres-output-port-template.1
+  title: PostgreSQL Output Port
+  description: |
+    Exposes a PostgreSQL table or view as a governed Output Port.
+    Includes Metaphactory semantic annotations for ontology-based discoverability.
+  tags:
+    - postgresql
+    - outputport
+    - metaphactory
+    - recommended
+  annotations:
+    backstage.io/techdocs-ref: dir:.
+spec:
+  generates: componenttype:default/outputport
+  owner: user:system
+  type: outputport
+  parameters:
+    - title: Component Metadata
+      required:
+        - name
+        - domain
+        - dataproduct
+        - description
+      properties:
+        name:
+          title: Component Name
+          type: string
+          ui:field: EntityNamePicker
+          ui:autofocus: true
+        fully_qualified_name:
+          title: Display Name
+          type: string
+        description:
+          title: Description
+          type: string
+          ui:widget: textarea
+          ui:options:
+            rows: 3
+        domain:
+          title: Domain
+          type: string
+          ui:field: EntityPicker
+          ui:options:
+            allowedKinds:
+              - Domain
+        dataproduct:
+          title: Data Product
+          type: string
+          ui:field: EntityPicker
+          ui:options:
+            allowedKinds:
+              - System
+            defaultKind: System
+        identifier:
+          title: Identifier
+          type: string
+          ui:field: ComponentIdentifierPicker
+          ui:options:
+            componentType: outputport
+        development_group:
+          title: Development Group
+          type: string
+          ui:field: EntityPicker
+          ui:options:
+            allowedKinds:
+              - Group
+        depends_on:
+          title: Dependencies
+          type: array
+          description: The PostgreSQL Storage component this port is based on
+          default: []
+          items:
+            type: string
+            ui:field: EntityPicker
+            ui:options:
+              allowedKinds:
+                - Component
+        tags:
+          title: Tags
+          type: array
+          default: []
+          items:
+            type: string
+          ui:widget: tags
+
+    - title: Terms & Conditions and SLA
+      properties:
+        termsAndConditions:
+          title: Terms & Conditions
+          type: string
+          ui:widget: textarea
+          default: "Data must only be used for internal analytics purposes. Redistribution is not permitted."
+        intervalOfChange:
+          title: Interval of Change
+          type: string
+          default: "Near real-time (Kafka-driven)"
+        timeliness:
+          title: Timeliness (ISO-8601)
+          type: string
+          default: PT5M
+        upTime:
+          title: Uptime SLA
+          type: string
+          default: "99.5%"
+
+    - title: Data Sharing Agreement
+      properties:
+        purpose:
+          title: Purpose
+          type: string
+          ui:widget: textarea
+          default: "Internal analytics and operational reporting"
+        billing:
+          title: Billing
+          type: string
+          default: "No charge for internal consumers"
+        security:
+          title: Security Classification
+          type: string
+          default: Internal
+          enum:
+            - Public
+            - Internal
+            - Confidential
+            - Restricted
+        intendedUsage:
+          title: Intended Usage
+          type: string
+          ui:widget: textarea
+          default: "Dashboards, reports, ad-hoc SQL queries"
+        limitations:
+          title: Limitations
+          type: string
+          ui:widget: textarea
+          default: "Read-only access. No bulk exports without approval."
+        lifeCycle:
+          title: Lifecycle
+          type: string
+          default: "Until further notice. Breaking changes communicated 30 days in advance."
+        confidentiality:
+          title: Confidentiality
+          type: string
+          default: "Internal use only."
+
+    - title: Data Contract Schema
+      properties:
+        schemaColumns:
+          title: Schema Columns
+          type: array
+          default: []
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+                title: Column Name
+              dataType:
+                type: string
+                title: PostgreSQL Data Type
+                enum:
+                  - TEXT
+                  - VARCHAR
+                  - INTEGER
+                  - BIGINT
+                  - NUMERIC
+                  - BOOLEAN
+                  - DATE
+                  - TIMESTAMP
+                  - TIMESTAMPTZ
+                  - JSONB
+                  - UUID
+              nullable:
+                type: boolean
+                title: Nullable
+                default: true
+              description:
+                type: string
+                title: Business Description
+              businessTerms:
+                type: array
+                title: Business Terms
+                default: []
+                items:
+                  type: string
+
+    - title: Metaphactory Semantic Annotations
+      description: Link this output port to your ontology in Metaphactory for semantic discoverability
+      properties:
+        metaphactory_base_url:
+          title: Metaphactory Base URL
+          type: string
+          description: URL of your Metaphactory instance
+          default: "https://metaphactory.your-org.com"
+        ontology_class_uri:
+          title: Ontology Class URI
+          type: string
+          description: The RDF class this output port represents (e.g. https://schema.org/Dataset)
+          default: "https://schema.org/Dataset"
+        semantic_labels:
+          title: Semantic Labels
+          type: array
+          description: Additional ontology URIs / business terms from Metaphactory
+          default: []
+          items:
+            type: string
+        column_mappings:
+          title: Column → Ontology Mappings
+          type: array
+          description: Map each column to a property URI in your ontology
+          default: []
+          items:
+            type: object
+            properties:
+              columnName:
+                type: string
+                title: Column Name
+              propertyUri:
+                type: string
+                title: Ontology Property URI
+                description: e.g. https://schema.org/name
+
+    - title: PostgreSQL Connection
+      required:
+        - postgres_host
+        - postgres_database
+        - postgres_schema
+        - postgres_table
+      properties:
+        postgres_host:
+          title: Host
+          type: string
+          default: "postgres:5432"
+        postgres_database:
+          title: Database
+          type: string
+        postgres_schema:
+          title: Schema
+          type: string
+          default: public
+        postgres_table:
+          title: Table or View Name
+          type: string
+        postgres_reader_role:
+          title: Reader Role
+          type: string
+          description: PostgreSQL role granted to consumers
+          default: data_reader
+        expose_as_view:
+          title: Expose as View
+          type: boolean
+          description: Should Witboost create a dedicated consumer view for this output port?
+          default: true
+        view_definition:
+          title: View SQL (optional)
+          type: string
+          description: Custom SELECT statement. Leave empty to expose the full table.
+          ui:widget: textarea
+
+  steps:
+    - id: template
+      name: Fetch Skeleton
+      action: fetch:template
+      input:
+        url: ./skeleton
+        values:
+          useCaseTemplateId: urn:dmb:utm:postgres-output-port-template:1
+          infrastructureTemplateId: urn:dmb:itm:postgres-output-port-provisioner:1
+          name: ${{ parameters.name }}
+          fully_qualified_name: ${{ parameters.fully_qualified_name }}
+          description: ${{ parameters.description }}
+          domain: ${{ parameters.domain }}
+          dataproduct: ${{ parameters.dataproduct }}
+          identifier: ${{ parameters.identifier }}
+          development_group: ${{ parameters.development_group }}
+          depends_on: ${{ parameters.depends_on }}
+          tags: ${{ parameters.tags }}
+          termsAndConditions: ${{ parameters.termsAndConditions }}
+          intervalOfChange: ${{ parameters.intervalOfChange }}
+          timeliness: ${{ parameters.timeliness }}
+          upTime: ${{ parameters.upTime }}
+          purpose: ${{ parameters.purpose }}
+          billing: ${{ parameters.billing }}
+          security: ${{ parameters.security }}
+          intendedUsage: ${{ parameters.intendedUsage }}
+          limitations: ${{ parameters.limitations }}
+          lifeCycle: ${{ parameters.lifeCycle }}
+          confidentiality: ${{ parameters.confidentiality }}
+          schemaColumns: ${{ parameters.schemaColumns }}
+          metaphactory_base_url: ${{ parameters.metaphactory_base_url }}
+          ontology_class_uri: ${{ parameters.ontology_class_uri }}
+          semantic_labels: ${{ parameters.semantic_labels }}
+          column_mappings: ${{ parameters.column_mappings }}
+          postgres_host: ${{ parameters.postgres_host }}
+          postgres_database: ${{ parameters.postgres_database }}
+          postgres_schema: ${{ parameters.postgres_schema }}
+          postgres_table: ${{ parameters.postgres_table }}
+          postgres_reader_role: ${{ parameters.postgres_reader_role }}
+          expose_as_view: ${{ parameters.expose_as_view }}
+          view_definition: ${{ parameters.view_definition }}
+
+    - id: publish
+      name: Publish to GitHub
+      action: publish:github
+      input:
+        allowedHosts: [github.com]
+        description: PostgreSQL Output Port - ${{ parameters.name }}
+        repoUrl: github.com?repo=${{ parameters.name }}&owner=<YOUR_GITHUB_ORG>
+        repoVisibility: internal
+        defaultBranch: main
+
+    - id: register
+      name: Register in Catalog
+      action: catalog:register
+      input:
+        repoContentsUrl: ${{ steps.publish.output.repoContentsUrl }}
+        catalogInfoPath: /catalog-info.yaml
+
+  output:
+    links:
+      - title: Repository
+        url: ${{ steps.publish.output.remoteUrl }}
+      - title: Open in Catalog
+        icon: catalog
+        entityRef: ${{ steps.register.output.entityRef }}

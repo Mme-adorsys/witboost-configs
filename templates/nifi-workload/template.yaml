@@ -1,0 +1,265 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: nifi-workload-template.1
+  title: NiFi Ingestion Workload (Kafka → PostgreSQL)
+  description: Creates an Apache NiFi pipeline workload that consumes from a Kafka Topic and writes into PostgreSQL
+  tags:
+    - nifi
+    - kafka
+    - postgres
+    - workload
+    - ingestion
+  annotations:
+    backstage.io/techdocs-ref: dir:.
+spec:
+  generates: componenttype:default/workload
+  owner: user:system
+  type: workload
+  parameters:
+    - title: Component Metadata
+      required:
+        - name
+        - domain
+        - dataproduct
+        - description
+      properties:
+        name:
+          title: Component Name
+          type: string
+          ui:field: EntityNamePicker
+          ui:autofocus: true
+        fully_qualified_name:
+          title: Display Name
+          type: string
+        description:
+          title: Description
+          type: string
+          description: What does this NiFi pipeline do?
+          ui:widget: textarea
+          ui:options:
+            rows: 3
+        domain:
+          title: Domain
+          type: string
+          ui:field: EntityPicker
+          ui:options:
+            allowedKinds:
+              - Domain
+        dataproduct:
+          title: Data Product
+          type: string
+          ui:field: EntityPicker
+          ui:options:
+            allowedKinds:
+              - System
+            defaultKind: System
+        identifier:
+          title: Identifier
+          type: string
+          ui:field: ComponentIdentifierPicker
+          ui:options:
+            componentType: workload
+        development_group:
+          title: Development Group
+          type: string
+          ui:field: EntityPicker
+          ui:options:
+            allowedKinds:
+              - Group
+        depends_on:
+          title: Dependencies
+          type: array
+          description: Select the Kafka Topic and PostgreSQL Storage this workload connects
+          default: []
+          items:
+            type: string
+            ui:field: EntityPicker
+            ui:options:
+              allowedKinds:
+                - Component
+        tags:
+          title: Tags
+          type: array
+          default: []
+          items:
+            type: string
+          ui:widget: tags
+
+    - title: Kafka Source (Input)
+      required:
+        - kafka_topic_name
+        - kafka_bootstrap_servers
+        - kafka_consumer_group
+      properties:
+        kafka_topic_name:
+          title: Kafka Topic Name
+          type: string
+          description: Topic to consume from (should match the Kafka Storage component)
+        kafka_bootstrap_servers:
+          title: Bootstrap Servers
+          type: string
+          default: "kafka1:9092,kafka2:9092"
+        kafka_consumer_group:
+          title: Consumer Group ID
+          type: string
+          description: Unique consumer group for this NiFi pipeline
+        kafka_offset_reset:
+          title: Auto Offset Reset
+          type: string
+          default: latest
+          enum:
+            - earliest
+            - latest
+        schema_registry_url:
+          title: Schema Registry URL
+          type: string
+          default: "http://schema-registry:8081"
+        message_format:
+          title: Message Format
+          type: string
+          default: AVRO
+          enum:
+            - AVRO
+            - JSON
+            - PROTOBUF
+
+    - title: PostgreSQL Target (Output)
+      required:
+        - postgres_host
+        - postgres_database
+        - postgres_schema
+        - postgres_table
+      properties:
+        postgres_host:
+          title: PostgreSQL Host
+          type: string
+          default: "postgres:5432"
+        postgres_database:
+          title: Database
+          type: string
+        postgres_schema:
+          title: Schema
+          type: string
+          default: public
+        postgres_table:
+          title: Target Table
+          type: string
+        postgres_user:
+          title: DB User
+          type: string
+          description: Database user for NiFi connection (store credentials in Vault/Secret Manager)
+          default: nifi_writer
+        write_mode:
+          title: Write Mode
+          type: string
+          description: How NiFi writes records into Postgres
+          default: INSERT
+          enum:
+            - INSERT
+            - UPSERT
+            - INSERT_OR_IGNORE
+          enumNames:
+            - "INSERT (append only)"
+            - "UPSERT (insert or update on conflict)"
+            - "INSERT OR IGNORE (skip duplicates)"
+        upsert_keys:
+          title: Upsert Key Columns
+          type: array
+          description: Columns used as the unique key for UPSERT (leave empty for INSERT)
+          default: []
+          items:
+            type: string
+
+    - title: NiFi Configuration
+      properties:
+        nifi_url:
+          title: NiFi API URL
+          type: string
+          default: "http://nifi:8080/nifi-api"
+        nifi_process_group:
+          title: Process Group Name
+          type: string
+          description: NiFi process group where this pipeline will be deployed
+        batch_size:
+          title: Batch Size
+          type: integer
+          description: Number of records per NiFi batch write
+          default: 1000
+        max_backoff_period:
+          title: Max Backoff (ms)
+          type: integer
+          description: Max retry backoff in milliseconds for transient errors
+          default: 10000
+        error_handling:
+          title: On Error
+          type: string
+          default: ROUTE_TO_FAILURE
+          enum:
+            - ROUTE_TO_FAILURE
+            - ROLLBACK
+          enumNames:
+            - "Route to failure relationship (dead-letter)"
+            - "Rollback and retry"
+
+  steps:
+    - id: template
+      name: Fetch Skeleton
+      action: fetch:template
+      input:
+        url: ./skeleton
+        values:
+          useCaseTemplateId: urn:dmb:utm:nifi-workload-template:1
+          infrastructureTemplateId: urn:dmb:itm:nifi-workload-provisioner:1
+          name: ${{ parameters.name }}
+          fully_qualified_name: ${{ parameters.fully_qualified_name }}
+          description: ${{ parameters.description }}
+          domain: ${{ parameters.domain }}
+          dataproduct: ${{ parameters.dataproduct }}
+          identifier: ${{ parameters.identifier }}
+          development_group: ${{ parameters.development_group }}
+          depends_on: ${{ parameters.depends_on }}
+          tags: ${{ parameters.tags }}
+          kafka_topic_name: ${{ parameters.kafka_topic_name }}
+          kafka_bootstrap_servers: ${{ parameters.kafka_bootstrap_servers }}
+          kafka_consumer_group: ${{ parameters.kafka_consumer_group }}
+          kafka_offset_reset: ${{ parameters.kafka_offset_reset }}
+          schema_registry_url: ${{ parameters.schema_registry_url }}
+          message_format: ${{ parameters.message_format }}
+          postgres_host: ${{ parameters.postgres_host }}
+          postgres_database: ${{ parameters.postgres_database }}
+          postgres_schema: ${{ parameters.postgres_schema }}
+          postgres_table: ${{ parameters.postgres_table }}
+          postgres_user: ${{ parameters.postgres_user }}
+          write_mode: ${{ parameters.write_mode }}
+          upsert_keys: ${{ parameters.upsert_keys }}
+          nifi_url: ${{ parameters.nifi_url }}
+          nifi_process_group: ${{ parameters.nifi_process_group }}
+          batch_size: ${{ parameters.batch_size }}
+          max_backoff_period: ${{ parameters.max_backoff_period }}
+          error_handling: ${{ parameters.error_handling }}
+
+    - id: publish
+      name: Publish to GitHub
+      action: publish:github
+      input:
+        allowedHosts: [github.com]
+        description: NiFi Ingestion Workload - ${{ parameters.name }}
+        repoUrl: github.com?repo=${{ parameters.name }}&owner=<YOUR_GITHUB_ORG>
+        repoVisibility: internal
+        defaultBranch: main
+
+    - id: register
+      name: Register in Catalog
+      action: catalog:register
+      input:
+        repoContentsUrl: ${{ steps.publish.output.repoContentsUrl }}
+        catalogInfoPath: /catalog-info.yaml
+
+  output:
+    links:
+      - title: Repository
+        url: ${{ steps.publish.output.remoteUrl }}
+      - title: Open in Catalog
+        icon: catalog
+        entityRef: ${{ steps.register.output.entityRef }}

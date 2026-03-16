@@ -1,0 +1,61 @@
+%SKELETON
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: ${{ values.name }}
+  description: ${{ values.description }}
+  annotations:
+    backstage.io/techdocs-ref: dir:.
+  {%- if values.tags | length > 0 %}
+  tags:
+    {%- for tag in values.tags %}
+    - ${{ tag }}
+    {%- endfor %}
+  {%- else %}
+  tags: []
+  {%- endif %}
+spec:
+  type: storage
+  lifecycle: experimental
+  owner: ${{ values.development_group }}
+  system: ${{ values.dataproduct }}
+  domain: ${{ values.domain }}
+  mesh:
+    name: ${{ values.fully_qualified_name | default(values.name) }}
+    fullyQualifiedName: ${{ values.fully_qualified_name | default(values.name) }}
+    description: ${{ values.description }}
+    kind: storage
+    version: "1.0.0"
+    infrastructureTemplateId: ${{ values.infrastructureTemplateId }}
+    useCaseTemplateId: ${{ values.useCaseTemplateId }}
+    dependsOn:
+      {%- if values.depends_on | length > 0 %}
+      {%- for dep in values.depends_on %}
+      - ${{ dep }}
+      {%- endfor %}
+    {%- endif %}
+      {%- else %}
+      []
+      {%- endif %}
+    {%- if values.tags | length > 0 %}
+    tags:
+      {%- for tag in values.tags %}
+      - ${{ tag }}
+      {%- endfor %}
+    {%- else %}
+    tags: []
+    {%- endif %}
+    specific:
+      host: "${{ values.postgres_host }}"
+      database: ${{ values.postgres_database }}
+      schema: ${{ values.postgres_schema }}
+      ownerRole: ${{ values.postgres_owner_role }}
+      readerRole: ${{ values.postgres_reader_role }}
+    {%- if values.tableSchemaColumns | length > 0 %}
+    tableSchema:
+      {%- for col in values.tableSchemaColumns %}
+      - name: ${{ col.name }}
+        dataType: ${{ col.dataType }}
+        nullable: ${{ col.nullable | default(true) }}
+        description: "${{ col.description | default('') }}"
+      {%- endfor %}

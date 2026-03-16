@@ -1,0 +1,110 @@
+%SKELETON
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: ${{ values.name }}
+  description: ${{ values.description }}
+  annotations:
+    backstage.io/techdocs-ref: dir:.
+  {%- if values.tags | length > 0 %}
+  tags:
+    {%- for tag in values.tags %}
+    - ${{ tag }}
+    {%- endfor %}
+  {%- else %}
+  tags: []
+  {%- endif %}
+spec:
+  type: outputport
+  lifecycle: experimental
+  owner: ${{ values.development_group }}
+  system: ${{ values.dataproduct }}
+  domain: ${{ values.domain }}
+  mesh:
+    name: ${{ values.fully_qualified_name | default(values.name) }}
+    fullyQualifiedName: ${{ values.fully_qualified_name | default(values.name) }}
+    description: ${{ values.description }}
+    kind: outputport
+    version: "1.0.0"
+    infrastructureTemplateId: ${{ values.infrastructureTemplateId }}
+    useCaseTemplateId: ${{ values.useCaseTemplateId }}
+    dependsOn:
+      {%- if values.depends_on | length > 0 %}
+      {%- for dep in values.depends_on %}
+      - ${{ dep }}
+      {%- endfor %}
+      {%- else %}
+      []
+      {%- endif %}
+    {%- if values.tags | length > 0 %}
+    tags:
+      {%- for tag in values.tags %}
+      - ${{ tag }}
+      {%- endfor %}
+    {%- else %}
+    tags: []
+    {%- endif %}
+    termsAndConditions: "${{ values.termsAndConditions }}"
+    SLA:
+      intervalOfChange: "${{ values.intervalOfChange }}"
+      timeliness: "${{ values.timeliness }}"
+      upTime: "${{ values.upTime }}"
+    dataSharingAgreement:
+      purpose: "${{ values.purpose }}"
+      billing: "${{ values.billing }}"
+      security: "${{ values.security }}"
+      intendedUsage: "${{ values.intendedUsage }}"
+      limitations: "${{ values.limitations }}"
+      lifeCycle: "${{ values.lifeCycle }}"
+      confidentiality: "${{ values.confidentiality }}"
+    dataContract:
+      {%- if values.schemaColumns | length > 0 %}
+      schema:
+        {%- for col in values.schemaColumns %}
+        - name: ${{ col.name }}
+          dataType: ${{ col.dataType }}
+          nullable: ${{ col.nullable | default(true) }}
+          description: "${{ col.description | default('') }}"
+          {%- if col.businessTerms | length > 0 %}
+          businessTerms:
+            {%- for term in col.businessTerms %}
+            - ${{ term }}
+            {%- endfor %}
+          {%- endif %}
+        {%- endfor %}
+      {%- else %}
+      schema: []
+      {%- endif %}
+    # ──────────────────────────────────────────────
+    # Metaphactory Semantic Annotations
+    # These are picked up by the Witboost Marketplace
+    # to enable ontology-based search and linking
+    # ──────────────────────────────────────────────
+    semanticAnnotations:
+      metaphactoryBaseUrl: "${{ values.metaphactory_base_url }}"
+      ontologyClassUri: "${{ values.ontology_class_uri }}"
+      {%- if values.semantic_labels | length > 0 %}
+      semanticLabels:
+        {%- for label in values.semantic_labels %}
+        - "${{ label }}"
+        {%- endfor %}
+      {%- endif %}
+      {%- if values.column_mappings | length > 0 %}
+      columnMappings:
+        {%- for mapping in values.column_mappings %}
+        - columnName: ${{ mapping.columnName }}
+          propertyUri: "${{ mapping.propertyUri }}"
+        {%- endfor %}
+      {%- endif %}
+    # PostgreSQL connection details
+    specific:
+      host: "${{ values.postgres_host }}"
+      database: ${{ values.postgres_database }}
+      schema: ${{ values.postgres_schema }}
+      tableName: ${{ values.postgres_table }}
+      readerRole: ${{ values.postgres_reader_role }}
+      exposeAsView: ${{ values.expose_as_view }}
+      {%- if values.view_definition %}
+      viewDefinition: |
+        ${{ values.view_definition }}
+      {%- endif %}

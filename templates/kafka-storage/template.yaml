@@ -1,0 +1,200 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: kafka-storage-template.1
+  title: Kafka Topic (Storage)
+  description: Registers a Kafka Topic as an owned Storage component within a Data Product
+  tags:
+    - kafka
+    - storage
+    - streaming
+  annotations:
+    backstage.io/techdocs-ref: dir:.
+spec:
+  generates: componenttype:default/storage
+  owner: user:system
+  type: storage
+  parameters:
+    - title: Component Metadata
+      required:
+        - name
+        - domain
+        - dataproduct
+        - description
+      properties:
+        name:
+          title: Component Name
+          type: string
+          ui:field: EntityNamePicker
+          ui:autofocus: true
+        fully_qualified_name:
+          title: Display Name
+          type: string
+        description:
+          title: Description
+          type: string
+          description: What events / messages does this topic carry?
+          ui:widget: textarea
+          ui:options:
+            rows: 3
+        domain:
+          title: Domain
+          type: string
+          ui:field: EntityPicker
+          ui:options:
+            allowedKinds:
+              - Domain
+        dataproduct:
+          title: Data Product
+          type: string
+          ui:field: EntityPicker
+          ui:options:
+            allowedKinds:
+              - System
+            defaultKind: System
+        identifier:
+          title: Identifier
+          type: string
+          ui:field: ComponentIdentifierPicker
+          ui:options:
+            componentType: storage
+        development_group:
+          title: Development Group
+          type: string
+          ui:field: EntityPicker
+          ui:options:
+            allowedKinds:
+              - Group
+        tags:
+          title: Tags
+          type: array
+          default: []
+          items:
+            type: string
+          ui:widget: tags
+
+    - title: Kafka Configuration
+      required:
+        - kafka_topic_name
+        - kafka_bootstrap_servers
+      properties:
+        kafka_topic_name:
+          title: Topic Name
+          type: string
+          description: Full Kafka topic name (e.g. domain.dataproduct.events.v1)
+        kafka_bootstrap_servers:
+          title: Bootstrap Servers
+          type: string
+          description: Comma-separated list of Kafka brokers (e.g. kafka1:9092,kafka2:9092)
+        kafka_partitions:
+          title: Partitions
+          type: integer
+          default: 3
+        kafka_replication_factor:
+          title: Replication Factor
+          type: integer
+          default: 3
+        retention_ms:
+          title: Retention (ms)
+          type: integer
+          description: How long messages are retained (-1 = unlimited)
+          default: 604800000
+        message_format:
+          title: Message Format
+          type: string
+          default: AVRO
+          enum:
+            - AVRO
+            - JSON
+            - PROTOBUF
+        schema_registry_url:
+          title: Schema Registry URL
+          type: string
+          description: Confluent Schema Registry endpoint (required for AVRO/PROTOBUF)
+          default: "http://schema-registry:8081"
+
+    - title: Message Schema
+      properties:
+        schemaFields:
+          title: Message Fields
+          type: array
+          description: Fields in each Kafka message
+          default: []
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+                title: Field Name
+              fieldType:
+                type: string
+                title: Avro / JSON Type
+                enum:
+                  - string
+                  - int
+                  - long
+                  - float
+                  - double
+                  - boolean
+                  - bytes
+                  - "null"
+                  - record
+                  - array
+              nullable:
+                type: boolean
+                title: Nullable
+                default: false
+              description:
+                type: string
+                title: Description
+
+  steps:
+    - id: template
+      name: Fetch Skeleton
+      action: fetch:template
+      input:
+        url: ./skeleton
+        values:
+          useCaseTemplateId: urn:dmb:utm:kafka-storage-template:1
+          infrastructureTemplateId: urn:dmb:itm:kafka-topic-provisioner:1
+          name: ${{ parameters.name }}
+          fully_qualified_name: ${{ parameters.fully_qualified_name }}
+          description: ${{ parameters.description }}
+          domain: ${{ parameters.domain }}
+          dataproduct: ${{ parameters.dataproduct }}
+          identifier: ${{ parameters.identifier }}
+          development_group: ${{ parameters.development_group }}
+          tags: ${{ parameters.tags }}
+          kafka_topic_name: ${{ parameters.kafka_topic_name }}
+          kafka_bootstrap_servers: ${{ parameters.kafka_bootstrap_servers }}
+          kafka_partitions: ${{ parameters.kafka_partitions }}
+          kafka_replication_factor: ${{ parameters.kafka_replication_factor }}
+          retention_ms: ${{ parameters.retention_ms }}
+          message_format: ${{ parameters.message_format }}
+          schema_registry_url: ${{ parameters.schema_registry_url }}
+          schemaFields: ${{ parameters.schemaFields }}
+
+    - id: publish
+      name: Publish to GitHub
+      action: publish:github
+      input:
+        allowedHosts: [github.com]
+        description: Kafka Topic - ${{ parameters.name }}
+        repoUrl: github.com?repo=${{ parameters.name }}&owner=<YOUR_GITHUB_ORG>
+        repoVisibility: internal
+        defaultBranch: main
+
+    - id: register
+      name: Register in Catalog
+      action: catalog:register
+      input:
+        repoContentsUrl: ${{ steps.publish.output.repoContentsUrl }}
+        catalogInfoPath: /catalog-info.yaml
+
+  output:
+    links:
+      - title: Repository
+        url: ${{ steps.publish.output.remoteUrl }}
+      - title: Open in Catalog
+        icon: catalog
+        entityRef: ${{ steps.register.output.entityRef }}

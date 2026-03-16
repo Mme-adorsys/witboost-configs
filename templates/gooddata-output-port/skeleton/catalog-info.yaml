@@ -1,0 +1,114 @@
+%SKELETON
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: ${{ values.name }}
+  description: ${{ values.description }}
+  annotations:
+    backstage.io/techdocs-ref: dir:.
+  {%- if values.tags | length > 0 %}
+  tags:
+    {%- for tag in values.tags %}
+    - ${{ tag }}
+    {%- endfor %}
+  {%- else %}
+  tags: []
+  {%- endif %}
+spec:
+  type: outputport
+  lifecycle: experimental
+  owner: ${{ values.development_group }}
+  system: ${{ values.dataproduct }}
+  domain: ${{ values.domain }}
+  mesh:
+    name: ${{ values.fully_qualified_name | default(values.name) }}
+    fullyQualifiedName: ${{ values.fully_qualified_name | default(values.name) }}
+    description: ${{ values.description }}
+    kind: outputport
+    version: "1.0.0"
+    infrastructureTemplateId: ${{ values.infrastructureTemplateId }}
+    useCaseTemplateId: ${{ values.useCaseTemplateId }}
+    dependsOn:
+      {%- if values.depends_on | length > 0 %}
+      {%- for dep in values.depends_on %}
+      - ${{ dep }}
+      {%- endfor %}
+      {%- else %}
+      []
+      {%- endif %}
+    {%- if values.tags | length > 0 %}
+    tags:
+      {%- for tag in values.tags %}
+      - ${{ tag }}
+      {%- endfor %}
+    {%- else %}
+    tags: []
+    {%- endif %}
+    termsAndConditions: "${{ values.termsAndConditions }}"
+    SLA:
+      intervalOfChange: "${{ values.intervalOfChange }}"
+      timeliness: "${{ values.timeliness }}"
+      upTime: "${{ values.upTime }}"
+    dataSharingAgreement:
+      purpose: "${{ values.purpose }}"
+      billing: "${{ values.billing }}"
+      security: "${{ values.security }}"
+      intendedUsage: "${{ values.intendedUsage }}"
+      limitations: "${{ values.limitations }}"
+      lifeCycle: "${{ values.lifeCycle }}"
+      confidentiality: "${{ values.confidentiality }}"
+    # ──────────────────────────────────────────────
+    # Metaphactory Semantic Annotations
+    # ──────────────────────────────────────────────
+    semanticAnnotations:
+      metaphactoryBaseUrl: "${{ values.metaphactory_base_url }}"
+      ontologyClassUri: "${{ values.ontology_class_uri }}"
+      {%- if values.semantic_labels | length > 0 %}
+      semanticLabels:
+        {%- for label in values.semantic_labels %}
+        - "${{ label }}"
+        {%- endfor %}
+      {%- endif %}
+    # ──────────────────────────────────────────────
+    # GoodData-specific configuration
+    # ──────────────────────────────────────────────
+    specific:
+      gooddata:
+        host: "${{ values.gooddata_host }}"
+        workspaceId: "${{ values.gooddata_workspace_id }}"
+        datasourceId: "${{ values.gooddata_datasource_id }}"
+        ldmDatasetId: "${{ values.gooddata_ldm_dataset_id }}"
+        apiTokenSecret: "${{ values.gooddata_api_token_secret }}"
+        logicalDataModel:
+          {%- if values.ldm_facts | length > 0 %}
+          facts:
+            {%- for fact in values.ldm_facts %}
+            - name: "${{ fact.name }}"
+              sourceColumn: ${{ fact.sourceColumn }}
+              description: "${{ fact.description | default('') }}"
+            {%- endfor %}
+          {%- else %}
+          facts: []
+          {%- endif %}
+          {%- if values.ldm_attributes | length > 0 %}
+          attributes:
+            {%- for attr in values.ldm_attributes %}
+            - name: "${{ attr.name }}"
+              sourceColumn: ${{ attr.sourceColumn }}
+              description: "${{ attr.description | default('') }}"
+              {%- if attr.labels | length > 0 %}
+              labels:
+                {%- for lbl in attr.labels %}
+                - "${{ lbl }}"
+                {%- endfor %}
+              {%- endif %}
+            {%- endfor %}
+          {%- else %}
+          attributes: []
+          {%- endif %}
+      postgresql:
+        host: "${{ values.postgres_host }}"
+        database: ${{ values.postgres_database }}
+        schema: ${{ values.postgres_schema }}
+        tableName: ${{ values.postgres_table }}
+        readerRole: ${{ values.postgres_reader_role }}

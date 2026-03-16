@@ -1,0 +1,78 @@
+%SKELETON
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: ${{ values.name }}
+  description: ${{ values.description }}
+  annotations:
+    backstage.io/techdocs-ref: dir:.
+  {%- if values.tags | length > 0 %}
+  tags:
+    {%- for tag in values.tags %}
+    - ${{ tag }}
+    {%- endfor %}
+  {%- else %}
+  tags: []
+  {%- endif %}
+spec:
+  type: workload
+  lifecycle: experimental
+  owner: ${{ values.development_group }}
+  system: ${{ values.dataproduct }}
+  domain: ${{ values.domain }}
+  mesh:
+    name: ${{ values.fully_qualified_name | default(values.name) }}
+    fullyQualifiedName: ${{ values.fully_qualified_name | default(values.name) }}
+    description: ${{ values.description }}
+    kind: workload
+    version: "1.0.0"
+    infrastructureTemplateId: ${{ values.infrastructureTemplateId }}
+    useCaseTemplateId: ${{ values.useCaseTemplateId }}
+    dependsOn:
+      {%- if values.depends_on | length > 0 %}
+      {%- for dep in values.depends_on %}
+      - ${{ dep }}
+      {%- endfor %}
+      {%- else %}
+      []
+      {%- endif %}
+    {%- if values.tags | length > 0 %}
+    tags:
+      {%- for tag in values.tags %}
+      - ${{ tag }}
+      {%- endfor %}
+    {%- else %}
+    tags: []
+    {%- endif %}
+    specific:
+      # Kafka Source
+      source:
+        type: kafka
+        topicName: ${{ values.kafka_topic_name }}
+        bootstrapServers: "${{ values.kafka_bootstrap_servers }}"
+        consumerGroup: "${{ values.kafka_consumer_group }}"
+        offsetReset: ${{ values.kafka_offset_reset }}
+        messageFormat: ${{ values.message_format }}
+        schemaRegistryUrl: "${{ values.schema_registry_url }}"
+      # PostgreSQL Target
+      target:
+        type: postgresql
+        host: "${{ values.postgres_host }}"
+        database: ${{ values.postgres_database }}
+        schema: ${{ values.postgres_schema }}
+        table: ${{ values.postgres_table }}
+        user: ${{ values.postgres_user }}
+        writeMode: ${{ values.write_mode }}
+        {%- if values.upsert_keys | length > 0 %}
+        upsertKeys:
+          {%- for key in values.upsert_keys %}
+          - ${{ key }}
+          {%- endfor %}
+        {%- endif %}
+      # NiFi Runtime
+      nifi:
+        apiUrl: "${{ values.nifi_url }}"
+        processGroup: "${{ values.nifi_process_group }}"
+        batchSize: ${{ values.batch_size }}
+        maxBackoffPeriodMs: ${{ values.max_backoff_period }}
+        errorHandling: ${{ values.error_handling }}

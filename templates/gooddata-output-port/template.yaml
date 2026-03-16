@@ -1,0 +1,334 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: gooddata-output-port-template.1
+  title: GoodData Output Port
+  description: |
+    Exposes a Data Product to GoodData consumers by defining a GoodData
+    Logical Data Model (LDM) / Semantic Model on top of the PostgreSQL Storage.
+    Includes Metaphactory semantic annotations.
+  tags:
+    - gooddata
+    - outputport
+    - metaphactory
+    - analytics
+  annotations:
+    backstage.io/techdocs-ref: dir:.
+spec:
+  generates: componenttype:default/outputport
+  owner: user:system
+  type: outputport
+  parameters:
+    - title: Component Metadata
+      required:
+        - name
+        - domain
+        - dataproduct
+        - description
+      properties:
+        name:
+          title: Component Name
+          type: string
+          ui:field: EntityNamePicker
+          ui:autofocus: true
+        fully_qualified_name:
+          title: Display Name
+          type: string
+        description:
+          title: Description
+          type: string
+          description: What analytics use case does this GoodData Output Port enable?
+          ui:widget: textarea
+          ui:options:
+            rows: 3
+        domain:
+          title: Domain
+          type: string
+          ui:field: EntityPicker
+          ui:options:
+            allowedKinds:
+              - Domain
+        dataproduct:
+          title: Data Product
+          type: string
+          ui:field: EntityPicker
+          ui:options:
+            allowedKinds:
+              - System
+            defaultKind: System
+        identifier:
+          title: Identifier
+          type: string
+          ui:field: ComponentIdentifierPicker
+          ui:options:
+            componentType: outputport
+        development_group:
+          title: Development Group
+          type: string
+          ui:field: EntityPicker
+          ui:options:
+            allowedKinds:
+              - Group
+        depends_on:
+          title: Dependencies
+          type: array
+          description: The PostgreSQL Storage or Output Port this GoodData model is built on
+          default: []
+          items:
+            type: string
+            ui:field: EntityPicker
+            ui:options:
+              allowedKinds:
+                - Component
+        tags:
+          title: Tags
+          type: array
+          default: []
+          items:
+            type: string
+          ui:widget: tags
+
+    - title: Terms & Conditions and SLA
+      properties:
+        termsAndConditions:
+          title: Terms & Conditions
+          type: string
+          ui:widget: textarea
+          default: "Data accessed via GoodData must only be used for approved analytics purposes."
+        intervalOfChange:
+          title: Interval of Change
+          type: string
+          default: "Near real-time (Kafka-driven)"
+        timeliness:
+          title: Timeliness (ISO-8601)
+          type: string
+          default: PT5M
+        upTime:
+          title: Uptime SLA
+          type: string
+          default: "99.5%"
+
+    - title: Data Sharing Agreement
+      properties:
+        purpose:
+          title: Purpose
+          type: string
+          ui:widget: textarea
+          default: "Self-service analytics and dashboarding via GoodData"
+        billing:
+          title: Billing
+          type: string
+          default: "No charge for internal consumers"
+        security:
+          title: Security Classification
+          type: string
+          default: Internal
+          enum:
+            - Public
+            - Internal
+            - Confidential
+            - Restricted
+        intendedUsage:
+          title: Intended Usage
+          type: string
+          ui:widget: textarea
+          default: "GoodData dashboards, metrics, and self-service reports"
+        limitations:
+          title: Limitations
+          type: string
+          ui:widget: textarea
+          default: "Read-only access via GoodData UI and API. No raw SQL access."
+        lifeCycle:
+          title: Lifecycle
+          type: string
+          default: "Until further notice. Breaking schema changes communicated 30 days in advance."
+        confidentiality:
+          title: Confidentiality
+          type: string
+          default: "Internal use only."
+
+    - title: GoodData Configuration
+      required:
+        - gooddata_host
+        - gooddata_workspace_id
+      properties:
+        gooddata_host:
+          title: GoodData Host URL
+          type: string
+          description: Your GoodData Cloud or GoodData.CN instance URL
+          default: "https://your-org.gooddata.com"
+        gooddata_workspace_id:
+          title: Workspace ID
+          type: string
+          description: GoodData workspace where this dataset will be published
+        gooddata_datasource_id:
+          title: Data Source ID
+          type: string
+          description: GoodData data source connected to your PostgreSQL
+        gooddata_ldm_dataset_id:
+          title: LDM Dataset ID
+          type: string
+          description: Unique identifier for this dataset in the GoodData Logical Data Model
+        gooddata_api_token_secret:
+          title: API Token Secret Name
+          type: string
+          description: Name of the secret (in Vault / K8s Secret) containing the GoodData API token
+          default: gooddata-api-token
+
+    - title: Logical Data Model (LDM)
+      description: Define the GoodData dataset structure – facts, attributes and labels
+      properties:
+        ldm_facts:
+          title: Facts (Measures)
+          type: array
+          description: Numeric columns used as metrics in GoodData
+          default: []
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+                title: Fact Name
+              sourceColumn:
+                type: string
+                title: Source Column (PostgreSQL)
+              description:
+                type: string
+                title: Description
+        ldm_attributes:
+          title: Attributes (Dimensions)
+          type: array
+          description: Categorical / dimensional columns
+          default: []
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+                title: Attribute Name
+              sourceColumn:
+                type: string
+                title: Source Column (PostgreSQL)
+              description:
+                type: string
+                title: Description
+              labels:
+                type: array
+                title: Labels
+                default: []
+                items:
+                  type: string
+
+    - title: Metaphactory Semantic Annotations
+      properties:
+        metaphactory_base_url:
+          title: Metaphactory Base URL
+          type: string
+          default: "https://metaphactory.your-org.com"
+        ontology_class_uri:
+          title: Ontology Class URI
+          type: string
+          default: "https://schema.org/Dataset"
+        semantic_labels:
+          title: Semantic Labels
+          type: array
+          default: []
+          items:
+            type: string
+
+    - title: PostgreSQL Source
+      description: The underlying PostgreSQL table/view this GoodData model reads from
+      required:
+        - postgres_host
+        - postgres_database
+        - postgres_schema
+        - postgres_table
+      properties:
+        postgres_host:
+          title: Host
+          type: string
+          default: "postgres:5432"
+        postgres_database:
+          title: Database
+          type: string
+        postgres_schema:
+          title: Schema
+          type: string
+          default: public
+        postgres_table:
+          title: Table or View
+          type: string
+        postgres_reader_role:
+          title: Reader Role
+          type: string
+          default: gooddata_reader
+
+  steps:
+    - id: template
+      name: Fetch Skeleton
+      action: fetch:template
+      input:
+        url: ./skeleton
+        values:
+          useCaseTemplateId: urn:dmb:utm:gooddata-output-port-template:1
+          infrastructureTemplateId: urn:dmb:itm:gooddata-output-port-provisioner:1
+          name: ${{ parameters.name }}
+          fully_qualified_name: ${{ parameters.fully_qualified_name }}
+          description: ${{ parameters.description }}
+          domain: ${{ parameters.domain }}
+          dataproduct: ${{ parameters.dataproduct }}
+          identifier: ${{ parameters.identifier }}
+          development_group: ${{ parameters.development_group }}
+          depends_on: ${{ parameters.depends_on }}
+          tags: ${{ parameters.tags }}
+          termsAndConditions: ${{ parameters.termsAndConditions }}
+          intervalOfChange: ${{ parameters.intervalOfChange }}
+          timeliness: ${{ parameters.timeliness }}
+          upTime: ${{ parameters.upTime }}
+          purpose: ${{ parameters.purpose }}
+          billing: ${{ parameters.billing }}
+          security: ${{ parameters.security }}
+          intendedUsage: ${{ parameters.intendedUsage }}
+          limitations: ${{ parameters.limitations }}
+          lifeCycle: ${{ parameters.lifeCycle }}
+          confidentiality: ${{ parameters.confidentiality }}
+          gooddata_host: ${{ parameters.gooddata_host }}
+          gooddata_workspace_id: ${{ parameters.gooddata_workspace_id }}
+          gooddata_datasource_id: ${{ parameters.gooddata_datasource_id }}
+          gooddata_ldm_dataset_id: ${{ parameters.gooddata_ldm_dataset_id }}
+          gooddata_api_token_secret: ${{ parameters.gooddata_api_token_secret }}
+          ldm_facts: ${{ parameters.ldm_facts }}
+          ldm_attributes: ${{ parameters.ldm_attributes }}
+          metaphactory_base_url: ${{ parameters.metaphactory_base_url }}
+          ontology_class_uri: ${{ parameters.ontology_class_uri }}
+          semantic_labels: ${{ parameters.semantic_labels }}
+          postgres_host: ${{ parameters.postgres_host }}
+          postgres_database: ${{ parameters.postgres_database }}
+          postgres_schema: ${{ parameters.postgres_schema }}
+          postgres_table: ${{ parameters.postgres_table }}
+          postgres_reader_role: ${{ parameters.postgres_reader_role }}
+
+    - id: publish
+      name: Publish to GitHub
+      action: publish:github
+      input:
+        allowedHosts: [github.com]
+        description: GoodData Output Port - ${{ parameters.name }}
+        repoUrl: github.com?repo=${{ parameters.name }}&owner=<YOUR_GITHUB_ORG>
+        repoVisibility: internal
+        defaultBranch: main
+
+    - id: register
+      name: Register in Catalog
+      action: catalog:register
+      input:
+        repoContentsUrl: ${{ steps.publish.output.repoContentsUrl }}
+        catalogInfoPath: /catalog-info.yaml
+
+  output:
+    links:
+      - title: Repository
+        url: ${{ steps.publish.output.remoteUrl }}
+      - title: Open in Catalog
+        icon: catalog
+        entityRef: ${{ steps.register.output.entityRef }}

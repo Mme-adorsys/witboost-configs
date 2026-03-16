@@ -1,0 +1,275 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: data-contract-template.1
+  title: Data Contract (Kafka → PostgreSQL)
+  description: |
+    Creates a Data Contract for the Kafka-to-PostgreSQL pipeline.
+    Validates incoming Kafka messages against a defined schema before
+    they reach the PostgreSQL Output Ports.
+    Includes Landing, Non-Compliant, and Compliant topics plus a Guardian workload.
+  tags:
+    - datacontract
+    - kafka
+    - postgresql
+    - recommended
+  annotations:
+    backstage.io/techdocs-ref: dir:.
+spec:
+  generates: componenttype:default/outputport
+  owner: user:system
+  type: outputport
+  parameters:
+    - title: Component Metadata
+      required:
+        - name
+        - domain
+        - dataproduct
+        - description
+      properties:
+        name:
+          title: Component Name
+          type: string
+          ui:field: EntityNamePicker
+          ui:autofocus: true
+        fully_qualified_name:
+          title: Display Name
+          type: string
+        description:
+          title: Description
+          type: string
+          description: What data does this contract govern?
+          ui:widget: textarea
+          ui:options:
+            rows: 3
+        domain:
+          title: Domain
+          type: string
+          ui:field: EntityPicker
+          ui:options:
+            allowedKinds:
+              - Domain
+        dataproduct:
+          title: Data Product
+          type: string
+          ui:field: EntityPicker
+          ui:options:
+            allowedKinds:
+              - System
+            defaultKind: System
+        identifier:
+          title: Identifier
+          type: string
+          ui:field: ComponentIdentifierPicker
+          ui:options:
+            componentType: outputport
+        development_group:
+          title: Development Group
+          type: string
+          ui:field: EntityPicker
+          ui:options:
+            allowedKinds:
+              - Group
+        depends_on:
+          title: Dependencies
+          type: array
+          description: Select the Kafka Storage and NiFi Workload this contract watches
+          default: []
+          items:
+            type: string
+            ui:field: EntityPicker
+            ui:options:
+              allowedKinds:
+                - Component
+        tags:
+          title: Tags
+          type: array
+          default: []
+          items:
+            type: string
+          ui:widget: tags
+
+    - title: Contract Schema
+      description: Define the schema that every Kafka message must conform to
+      properties:
+        schemaColumns:
+          title: Expected Fields
+          type: array
+          description: Messages that violate this schema are routed to the Non-Compliant topic
+          default: []
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+                title: Field Name
+              dataType:
+                type: string
+                title: Expected Type
+                enum:
+                  - TEXT
+                  - VARCHAR
+                  - INTEGER
+                  - BIGINT
+                  - NUMERIC
+                  - BOOLEAN
+                  - DATE
+                  - TIMESTAMP
+                  - TIMESTAMPTZ
+                  - JSONB
+                  - UUID
+              nullable:
+                type: boolean
+                title: Nullable
+                default: false
+              description:
+                type: string
+                title: Description
+              constraints:
+                type: string
+                title: Constraints
+                description: "E.g. NOT NULL, value > 0, regex pattern"
+
+    - title: Contract Settings
+      properties:
+        ingestion_mode:
+          title: Ingestion Mode
+          type: string
+          default: PUSH
+          enum:
+            - PUSH
+            - DATA_AT_REST
+          enumNames:
+            - "Push (Kafka streaming)"
+            - "Data at Rest (batch)"
+        on_broken_contract:
+          title: On Broken Contract
+          type: string
+          default: CIRCUIT_BREAK
+          enum:
+            - RED_FLAG
+            - CIRCUIT_BREAK
+          enumNames:
+            - "Red Flag – warn only, data still flows to Postgres"
+            - "Circuit Break – block non-compliant messages from reaching Postgres"
+        contract_description:
+          title: Contract Description
+          type: string
+          ui:widget: textarea
+          default: "All required fields must be present, non-null, and match the declared types."
+
+    - title: SLA & Terms
+      properties:
+        upTime:
+          title: Uptime SLA
+          type: string
+          default: "99.5%"
+        timeliness:
+          title: Timeliness (ISO-8601)
+          type: string
+          default: PT5M
+        termsAndConditions:
+          title: Terms & Conditions
+          type: string
+          ui:widget: textarea
+          default: "Data must only be used for internal analytics purposes."
+
+    - title: Guardian Configuration
+      properties:
+        monitoring_frequency:
+          title: Monitoring Frequency (Quartz Cron, 6 fields)
+          type: string
+          description: "E.g. '0 */5 * * * ?' = every 5 minutes"
+          default: "0 */5 * * * ?"
+        tolerance_window:
+          title: Tolerance Window (ISO-8601 duration)
+          type: string
+          description: Grace period before raising a violation alert
+          default: PT5M
+
+    - title: Topics Configuration (Kafka)
+      description: The three Kafka topics used by the Data Contract pipeline
+      required:
+        - kafka_bootstrap_servers
+        - topic_landing
+        - topic_noncompliant
+        - topic_compliant
+      properties:
+        kafka_bootstrap_servers:
+          title: Bootstrap Servers
+          type: string
+          default: "kafka1:9092,kafka2:9092"
+        topic_landing:
+          title: Landing Topic Name
+          type: string
+          description: Raw / unvalidated messages arrive here
+        topic_noncompliant:
+          title: Non-Compliant Topic Name
+          type: string
+          description: Messages that failed validation are routed here
+        topic_compliant:
+          title: Compliant Topic Name
+          type: string
+          description: Validated messages – this is what NiFi reads and writes to Postgres
+        schema_registry_url:
+          title: Schema Registry URL
+          type: string
+          default: "http://schema-registry:8081"
+
+  steps:
+    - id: template
+      name: Fetch Skeleton
+      action: fetch:template
+      input:
+        url: ./skeleton
+        values:
+          useCaseTemplateId: urn:dmb:utm:data-contract-template:1
+          infrastructureTemplateId: urn:dmb:itm:data-contract-provisioner:1
+          name: ${{ parameters.name }}
+          fully_qualified_name: ${{ parameters.fully_qualified_name }}
+          description: ${{ parameters.description }}
+          domain: ${{ parameters.domain }}
+          dataproduct: ${{ parameters.dataproduct }}
+          identifier: ${{ parameters.identifier }}
+          development_group: ${{ parameters.development_group }}
+          depends_on: ${{ parameters.depends_on }}
+          tags: ${{ parameters.tags }}
+          schemaColumns: ${{ parameters.schemaColumns }}
+          ingestion_mode: ${{ parameters.ingestion_mode }}
+          on_broken_contract: ${{ parameters.on_broken_contract }}
+          contract_description: ${{ parameters.contract_description }}
+          upTime: ${{ parameters.upTime }}
+          timeliness: ${{ parameters.timeliness }}
+          termsAndConditions: ${{ parameters.termsAndConditions }}
+          monitoring_frequency: ${{ parameters.monitoring_frequency }}
+          tolerance_window: ${{ parameters.tolerance_window }}
+          kafka_bootstrap_servers: ${{ parameters.kafka_bootstrap_servers }}
+          topic_landing: ${{ parameters.topic_landing }}
+          topic_noncompliant: ${{ parameters.topic_noncompliant }}
+          topic_compliant: ${{ parameters.topic_compliant }}
+          schema_registry_url: ${{ parameters.schema_registry_url }}
+
+    - id: publish
+      name: Publish to GitHub
+      action: publish:github
+      input:
+        allowedHosts: [github.com]
+        description: Data Contract - ${{ parameters.name }}
+        repoUrl: github.com?repo=${{ parameters.name }}&owner=<YOUR_GITHUB_ORG>
+        repoVisibility: internal
+        defaultBranch: main
+
+    - id: register
+      name: Register in Catalog
+      action: catalog:register
+      input:
+        repoContentsUrl: ${{ steps.publish.output.repoContentsUrl }}
+        catalogInfoPath: /catalog-info.yaml
+
+  output:
+    links:
+      - title: Repository
+        url: ${{ steps.publish.output.remoteUrl }}
+      - title: Open in Catalog
+        icon: catalog
+        entityRef: ${{ steps.register.output.entityRef }}

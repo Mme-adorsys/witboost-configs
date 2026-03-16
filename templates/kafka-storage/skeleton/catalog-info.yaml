@@ -1,0 +1,56 @@
+%SKELETON
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: ${{ values.name }}
+  description: ${{ values.description }}
+  annotations:
+    backstage.io/techdocs-ref: dir:.
+  {%- if values.tags | length > 0 %}
+  tags:
+    {%- for tag in values.tags %}
+    - ${{ tag }}
+    {%- endfor %}
+  {%- else %}
+  tags: []
+  {%- endif %}
+spec:
+  type: storage
+  lifecycle: experimental
+  owner: ${{ values.development_group }}
+  system: ${{ values.dataproduct }}
+  domain: ${{ values.domain }}
+  mesh:
+    name: ${{ values.fully_qualified_name | default(values.name) }}
+    fullyQualifiedName: ${{ values.fully_qualified_name | default(values.name) }}
+    description: ${{ values.description }}
+    kind: storage
+    version: "1.0.0"
+    infrastructureTemplateId: ${{ values.infrastructureTemplateId }}
+    useCaseTemplateId: ${{ values.useCaseTemplateId }}
+    dependsOn: []
+    {%- if values.tags | length > 0 %}
+    tags:
+      {%- for tag in values.tags %}
+      - ${{ tag }}
+      {%- endfor %}
+    {%- endif %}
+    {%- else %}
+    tags: []
+    {%- endif %}
+    specific:
+      topicName: ${{ values.kafka_topic_name }}
+      bootstrapServers: "${{ values.kafka_bootstrap_servers }}"
+      partitions: ${{ values.kafka_partitions }}
+      replicationFactor: ${{ values.kafka_replication_factor }}
+      retentionMs: ${{ values.retention_ms }}
+      messageFormat: ${{ values.message_format }}
+      schemaRegistryUrl: "${{ values.schema_registry_url }}"
+    {%- if values.schemaFields | length > 0 %}
+    messageSchema:
+      {%- for field in values.schemaFields %}
+      - name: ${{ field.name }}
+        type: ${{ field.fieldType }}
+        nullable: ${{ field.nullable | default(false) }}
+        description: "${{ field.description | default('') }}"
+      {%- endfor %}

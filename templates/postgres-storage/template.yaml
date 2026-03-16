@@ -1,0 +1,195 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: postgres-storage-template.1
+  title: PostgreSQL Storage Area
+  description: Registers a PostgreSQL database/schema as a Storage component within a Data Product
+  tags:
+    - postgresql
+    - storage
+  annotations:
+    backstage.io/techdocs-ref: dir:.
+spec:
+  generates: componenttype:default/storage
+  owner: user:system
+  type: storage
+  parameters:
+    - title: Component Metadata
+      required:
+        - name
+        - domain
+        - dataproduct
+        - description
+      properties:
+        name:
+          title: Component Name
+          type: string
+          ui:field: EntityNamePicker
+          ui:autofocus: true
+        fully_qualified_name:
+          title: Display Name
+          type: string
+        description:
+          title: Description
+          type: string
+          ui:widget: textarea
+          ui:options:
+            rows: 3
+        domain:
+          title: Domain
+          type: string
+          ui:field: EntityPicker
+          ui:options:
+            allowedKinds:
+              - Domain
+        dataproduct:
+          title: Data Product
+          type: string
+          ui:field: EntityPicker
+          ui:options:
+            allowedKinds:
+              - System
+            defaultKind: System
+        identifier:
+          title: Identifier
+          type: string
+          ui:field: ComponentIdentifierPicker
+          ui:options:
+            componentType: storage
+        development_group:
+          title: Development Group
+          type: string
+          ui:field: EntityPicker
+          ui:options:
+            allowedKinds:
+              - Group
+        depends_on:
+          title: Dependencies
+          type: array
+          default: []
+          items:
+            type: string
+            ui:field: EntityPicker
+            ui:options:
+              allowedKinds:
+                - Component
+        tags:
+          title: Tags
+          type: array
+          default: []
+          items:
+            type: string
+          ui:widget: tags
+
+    - title: PostgreSQL Configuration
+      required:
+        - postgres_host
+        - postgres_database
+        - postgres_schema
+      properties:
+        postgres_host:
+          title: Host
+          type: string
+          default: "postgres:5432"
+        postgres_database:
+          title: Database Name
+          type: string
+        postgres_schema:
+          title: Schema Name
+          type: string
+          default: public
+        postgres_owner_role:
+          title: Owner Role
+          type: string
+          description: PostgreSQL role that owns this schema
+          default: data_owner
+        postgres_reader_role:
+          title: Reader Role
+          type: string
+          description: Role granted SELECT on this schema (used by output ports)
+          default: data_reader
+
+    - title: Table Schema
+      properties:
+        tableSchemaColumns:
+          title: Columns
+          type: array
+          default: []
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+                title: Column Name
+              dataType:
+                type: string
+                title: PostgreSQL Data Type
+                enum:
+                  - TEXT
+                  - VARCHAR
+                  - INTEGER
+                  - BIGINT
+                  - NUMERIC
+                  - BOOLEAN
+                  - DATE
+                  - TIMESTAMP
+                  - TIMESTAMPTZ
+                  - JSONB
+                  - UUID
+              nullable:
+                type: boolean
+                title: Nullable
+                default: true
+              description:
+                type: string
+                title: Description
+
+  steps:
+    - id: template
+      name: Fetch Skeleton
+      action: fetch:template
+      input:
+        url: ./skeleton
+        values:
+          useCaseTemplateId: urn:dmb:utm:postgres-storage-template:1
+          infrastructureTemplateId: urn:dmb:itm:postgres-storage-provisioner:1
+          name: ${{ parameters.name }}
+          fully_qualified_name: ${{ parameters.fully_qualified_name }}
+          description: ${{ parameters.description }}
+          domain: ${{ parameters.domain }}
+          dataproduct: ${{ parameters.dataproduct }}
+          identifier: ${{ parameters.identifier }}
+          development_group: ${{ parameters.development_group }}
+          depends_on: ${{ parameters.depends_on }}
+          tags: ${{ parameters.tags }}
+          postgres_host: ${{ parameters.postgres_host }}
+          postgres_database: ${{ parameters.postgres_database }}
+          postgres_schema: ${{ parameters.postgres_schema }}
+          postgres_owner_role: ${{ parameters.postgres_owner_role }}
+          postgres_reader_role: ${{ parameters.postgres_reader_role }}
+          tableSchemaColumns: ${{ parameters.tableSchemaColumns }}
+
+    - id: publish
+      name: Publish to GitHub
+      action: publish:github
+      input:
+        allowedHosts: [github.com]
+        description: PostgreSQL Storage - ${{ parameters.name }}
+        repoUrl: github.com?repo=${{ parameters.name }}&owner=<YOUR_GITHUB_ORG>
+        repoVisibility: internal
+        defaultBranch: main
+
+    - id: register
+      name: Register in Catalog
+      action: catalog:register
+      input:
+        repoContentsUrl: ${{ steps.publish.output.repoContentsUrl }}
+        catalogInfoPath: /catalog-info.yaml
+
+  output:
+    links:
+      - title: Repository
+        url: ${{ steps.publish.output.remoteUrl }}
+      - title: Open in Catalog
+        icon: catalog
+        entityRef: ${{ steps.register.output.entityRef }}

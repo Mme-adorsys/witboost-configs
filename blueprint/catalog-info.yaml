@@ -1,0 +1,64 @@
+apiVersion: agilelab.it/v1alpha1
+kind: Blueprint
+metadata:
+  # Only [a-z0-9] and hyphens!
+  name: kafka-nifi-postgres-blueprint
+  title: Kafka → NiFi → PostgreSQL Full Stack Blueprint
+  description: |
+    A complete Data Product blueprint for a streaming ingestion pipeline:
+
+    1. Kafka Topic          – owned event source
+    2. Data Contract        – schema validation before ingestion (Landing / Non-Compliant / Compliant topics + Guardian)
+    3. NiFi Workload        – consumes validated Kafka messages, writes to PostgreSQL
+    4. PostgreSQL Storage   – target database
+    5. PostgreSQL Output Port – governed SQL access for consumers (with Metaphactory annotations)
+    6. GoodData Output Port – self-service analytics layer for GoodData consumers
+
+    Consumers discover data via the Witboost Marketplace, with semantic enrichment via Metaphactory.
+  tags:
+    - kafka
+    - nifi
+    - postgresql
+    - gooddata
+    - metaphactory
+    - blueprint
+    - recommended
+spec:
+  lifecycle: experimental
+  owner: group:<YOUR_TEAM>       # <-- replace, e.g. group:data-platform
+  domain: domain:<YOUR_DOMAIN>   # <-- replace, e.g. domain:analytics
+
+  # The Data Product template this blueprint is built on
+  mainTemplateId: template:default/data-product-template.1
+
+  # Component templates in recommended creation order.
+  # dependencies controls the UI flow so users know what to create first.
+  templates:
+    # 1. Kafka Topic – must exist before Data Contract and NiFi can reference it
+    - id: template:default/kafka-storage-template.1
+      dependencies: []
+
+    # 2. Data Contract – validates Kafka messages before NiFi reads them
+    - id: template:default/data-contract-template.1
+      dependencies:
+        - template:default/kafka-storage-template.1
+
+    # 3. PostgreSQL Storage – the target database for NiFi writes
+    - id: template:default/postgres-storage-template.1
+      dependencies: []
+
+    # 4. NiFi Workload – reads from Compliant Kafka topic → writes to Postgres
+    - id: template:default/nifi-workload-template.1
+      dependencies:
+        - template:default/data-contract-template.1
+        - template:default/postgres-storage-template.1
+
+    # 5. PostgreSQL Output Port – SQL access for consumers (e.g. direct JDBC)
+    - id: template:default/postgres-output-port-template.1
+      dependencies:
+        - template:default/nifi-workload-template.1
+
+    # 6. GoodData Output Port – self-service analytics via GoodData
+    - id: template:default/gooddata-output-port-template.1
+      dependencies:
+        - template:default/postgres-output-port-template.1
