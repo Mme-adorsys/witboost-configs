@@ -1,0 +1,13 @@
+environmentParameters:
+  development:
+    database: ${{ parameters.domainNameWithTrims }}_${{ parameters.dataProductNameWithTrims }}_${{ readonly.__version__.split(".")[0] }}_development
+  qa:
+    database: ${{ parameters.domainNameWithTrims }}_${{ parameters.dataProductNameWithTrims }}_${{ readonly.__version__.split(".")[0] }}_qa
+  production:
+    database: ${{ parameters.domainNameWithTrims }}_${{ parameters.dataProductNameWithTrims }}_${{ readonly.__version__.split(".")[0] }}_production
+parameters:
+  dataProductNameWithTrims: ${{ parameters.dataproduct.split(".")[1] | replace(r/ /g, "_") }}
+  domainNameWithTrims: ${{ parameters.domain.split(":")[1] | replace(r/ /g, "_") }}
+readonly:
+  __system__: ${{ parameters.dataproduct }}
+  __version__: '${{ parameters.identifier.split(".")[2] }}.0.0'

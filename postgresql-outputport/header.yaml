@@ -1,0 +1,35 @@
+title: PostgreSQL Output Port
+properties:
+  host:
+    title: Host
+    type: string
+    description: PostgreSQL server hostname or IP
+  port:
+    title: Port
+    type: integer
+    description: PostgreSQL port (default = 5432)
+  dbname:
+    title: Database Name
+    type: string
+    description: Name of the PostgreSQL database
+  user:
+    title: User
+    type: string
+    description: PostgreSQL username
+  password:
+    title: Password
+    type: string
+    description: PostgreSQL password
+    ui:widget: password
+  table:
+    title: Table
+    type: string
+    description: Target table to write data
+  schema:
+    title: Schema
+    type: string
+    description: Optional schema (default = public)
+description: |-
+  With this template propagate that your data product writes data to PostgreSQL.
+  
+  After creation you can use the Editor Wizard to customize the component and add more details to the Output Port.

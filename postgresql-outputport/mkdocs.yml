@@ -1,0 +1,8 @@
+site_name: "PostgreSQL Output Port Template"
+site_description: "Create a PostgreSQL Output Port"
+
+nav:
+  - Template Usage: docs/index.md
+
+plugins:
+  - techdocs-core

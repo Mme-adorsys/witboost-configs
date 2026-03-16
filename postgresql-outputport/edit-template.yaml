@@ -1,0 +1,84 @@
+apiVersion: witboost.com/v2
+kind: EditTemplate
+metadata:
+  name: edit-postgresql-outputport-template
+  title: Edit PostgreSQL  Outputport
+  description: Edit a PostgreSQL Outputport
+  tags:
+    - edit
+    - output-port
+    - postgresql
+  mesh:
+    icon: https://upload.wikimedia.org/wikipedia/commons/2/29/Postgresql_elephant.svg
+spec:
+  owner: datev_eg
+  useCaseTemplateId:
+    - urn:dmb:utm:postgresql-outputport-template:0.0.0
+
+  parameters:
+    - title: Update Output Port
+      description: |
+        This wizard will allow you to edit the metadata for a previously created PostgreSQL Outputport.
+        
+        Most metadata is editable but some are not; their fields will be read-only.
+        
+        Some of the files in the component's repository cannot be updated by this wizard, namely:
+        - **Documentation**: `README.md`, `docs/index.md`, etc
+        - **CI/CD**: `.gitlab-ci-yaml`
+        You need to take care of updating these yourself, as given their nature it's hard to do automatically and they are often edited manually after the component's creation.
+
+    - title: Update PostgreSQL Outputport metadata
+      required:
+        - description
+      properties:
+        name:
+          title: Name
+          type: string
+          description: Not editable. The name of the Data Product.
+          ui:disabled: true
+        domain:
+          title: Domain
+          type: string
+          description: Not editable. Domain of the Data Product.
+          ui:field: EntityPicker
+          ui:options:
+            allowArbitraryValues: false
+            allowedKinds:
+              - Domain
+          ui:disabled: true
+        description:
+          title: Description
+          type: string
+          description: Required. Detailed description about what functional area this DP is representing, what purpose has, and business related information.
+    - title: PostgreSQL Connection & Schema
+      description: Configuration for PostgreSQL Outputport
+      properties:
+        host:
+          title: Host
+          type: string
+          description: PostgreSQL server hostname or IP.
+        port:
+          title: Port
+          type: integer
+          description: PostgreSQL port number (default = 5432)
+        dbname:
+          title: Database Name
+          type: string
+          description: Name of the PostgreSQL database.
+        user:
+          title: User
+          type: string
+          description: Username for PostgreSQL authentication.
+        password:
+          title: Password
+          type: string
+          description: Password for PostgreSQL authentication.
+          ui:widget: password
+        table:
+          title: Table
+          type: string
+          description: Target table to write data.
+        schema:
+          title: Schema
+          type: string
+          description: Optional. Database schema (default = public).
