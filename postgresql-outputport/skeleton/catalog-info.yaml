@@ -10,6 +10,13 @@ metadata:
   description: ${{ parameters.description | dump }}
   annotations:
     backstage.io/techdocs-ref: dir:.
+  {%- if values.ontologyClassUri %}
+  links:
+    - url: "${{ values.metaphactoryBaseUrl }}/resource/?uri=${{ values.ontologyClassUri | urlencode }}"
+      title: "Ontologie in Metaphactory öffnen"
+      icon: language
+      type: metaphactory
+  {%- endif %}
   tags:
     - output-port
     - postgresql

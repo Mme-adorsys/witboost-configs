@@ -126,6 +126,15 @@ spec:
           description: Name of the ontology to be created by this components data-schema. If left empty, no ontology will be created. Creation happens at deploy-time of the dataproduct.
           ui:field: EntityNamePicker
           pattern: ^[a-zA-Z0-9-]+$
+        metaphactoryBaseUrl:
+          title: Metaphactory Base URL
+          type: string
+          description: Base URL of your Metaphactory instance (z.B. https://metaphactory.datev.de). Wird für den direkten Link zur Ontologie genutzt.
+          default: https://metaphactory.datev.de
+        ontologyClassUri:
+          title: Ontologie-Klassen-URI
+          type: string
+          description: Vollständige URI der Ontologie-Klasse in Metaphactory (z.B. https://ontology.datev.de/ns#Buchungsposition). Leer lassen wenn keine Verlinkung gewünscht.
   steps:
     - id: template
       name: Fetch Skeleton + Template
@@ -152,6 +161,8 @@ spec:
           password: '${{ parameters.password }}'
           table: '${{ parameters.table }}'
           schema: '${{ parameters.schema | default("public") }}'
+          metaphactoryBaseUrl: '${{ parameters.metaphactoryBaseUrl }}'
+          ontologyClassUri: '${{ parameters.ontologyClassUri }}'
           destination: &destination 'github.com?owner=datevscm&repo=dataproduct-${{ parameters.domain | replace(r/domain:| |-/, "") }}-${{ parameters.dataproduct.split(".")[1] | replace(r/ /g, "-") }}'
     - id: publish
       name: Publish

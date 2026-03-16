@@ -82,3 +82,12 @@ spec:
           title: Schema
           type: string
           description: Optional. Database schema (default = public).
+        metaphactoryBaseUrl:
+          title: Metaphactory Base URL
+          type: string
+          description: Base URL der Metaphactory-Instanz (z.B. https://metaphactory.datev.de).
+          default: https://metaphactory.datev.de
+        ontologyClassUri:
+          title: Ontologie-Klassen-URI
+          type: string
+          description: Vollständige URI der Ontologie-Klasse in Metaphactory. Leer lassen wenn keine Verlinkung gewünscht.
