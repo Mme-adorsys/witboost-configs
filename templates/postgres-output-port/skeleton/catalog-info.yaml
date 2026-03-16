@@ -6,6 +6,11 @@ metadata:
   description: ${{ values.description }}
   annotations:
     backstage.io/techdocs-ref: dir:.
+  links:
+    - url: "${{ values.metaphactory_base_url }}/resource/?uri=${{ values.ontology_class_uri | urlencode }}"
+      title: "Ontologie in Metaphactory öffnen"
+      icon: language
+      type: metaphactory
   {%- if values.tags | length > 0 %}
   tags:
     {%- for tag in values.tags %}
