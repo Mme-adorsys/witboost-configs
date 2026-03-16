@@ -79,7 +79,6 @@ spec:
           default: []
           items:
             type: string
-          ui:widget: tags
 
     - title: PostgreSQL Configuration
       required:

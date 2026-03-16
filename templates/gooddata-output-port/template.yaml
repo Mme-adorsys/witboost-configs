@@ -86,7 +86,6 @@ spec:
           default: []
           items:
             type: string
-          ui:widget: tags
 
     - title: Terms & Conditions and SLA
       properties:

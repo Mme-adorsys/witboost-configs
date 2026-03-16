@@ -87,7 +87,6 @@ spec:
           default: []
           items:
             type: string
-          ui:widget: tags
 
     - title: Contract Schema
       description: Define the schema that every Kafka message must conform to

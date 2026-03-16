@@ -84,7 +84,6 @@ spec:
           default: []
           items:
             type: string
-          ui:widget: tags
 
     - title: Kafka Source (Input)
       required:
