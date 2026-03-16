@@ -25,8 +25,8 @@ metadata:
     - recommended
 spec:
   lifecycle: experimental
-  owner: group:<YOUR_TEAM>       # <-- replace, e.g. group:data-platform
-  domain: domain:<YOUR_DOMAIN>   # <-- replace, e.g. domain:analytics
+  owner: group:witboost-datanext
+  domain: domain:default
 
   # The Data Product template this blueprint is built on
   mainTemplateId: template:default/data-product-template.1
