@@ -29,7 +29,7 @@ spec:
   domain: domain:default
 
   # The Data Product template this blueprint is built on
-  mainTemplateId: template:default/data-product-template.1
+  mainTemplateId: template:default/dataproduct-template
 
   # Component templates in recommended creation order.
   # dependencies controls the UI flow so users know what to create first.
