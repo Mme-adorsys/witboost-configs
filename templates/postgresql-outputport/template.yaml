@@ -1,7 +1,7 @@
 apiVersion: scaffolder.backstage.io/v1beta3
 kind: Template
 metadata:
-  name: postgresql-outputport-template.1
+  name: postgresql-outputport-template.2
   title: PostgreSQL Output Port
   description: Provide your data via PostgreSQL!
   annotations:

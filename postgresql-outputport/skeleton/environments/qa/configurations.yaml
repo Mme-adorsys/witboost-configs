@@ -1,7 +1,0 @@
-{% set dataProductMajorVersion = values.identifier.split(".")[2] %}
-{% set dataProductNameWithTrims = values.dataproduct.split(".")[1] | replace(r/ /g, "_") %}
-{% set domainNameWithTrims = values.domain.split(":")[1] | replace(r/ /g, "_") %}
-
-specific:
-  database: ${{ domainNameWithTrims }}_${{ dataProductNameWithTrims }}_${{ dataProductMajorVersion }}_development
-  schema: public
